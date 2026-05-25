@@ -118,6 +118,9 @@ export function ArchiveCanvas({ images, onSelect }: ArchiveCanvasProps) {
   const zoomCurrentRef = React.useRef(12)
   const dragStateRef = React.useRef<DragState>({ active: false, dragged: false })
   const lastPointerRef = React.useRef({ x: 0, y: 0 })
+  const isPinchingRef = React.useRef(false)
+  const pinchStartDistanceRef = React.useRef(0)
+  const pinchStartZoomRef = React.useRef(12)
 
   const layout = React.useMemo(() => buildLayout(images), [images])
 
@@ -151,7 +154,7 @@ export function ArchiveCanvas({ images, onSelect }: ArchiveCanvasProps) {
 
   const handlePointerMove = React.useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
-      if (!dragStateRef.current.active) {
+      if (!dragStateRef.current.active || isPinchingRef.current) {
         return
       }
 
@@ -208,6 +211,54 @@ export function ArchiveCanvas({ images, onSelect }: ArchiveCanvasProps) {
     invalidateRef.current?.()
   }, [])
 
+  const handleTouchStart = React.useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      if (event.touches.length === 2) {
+        const first = event.touches.item(0)
+        const second = event.touches.item(1)
+        if (!first || !second) {
+          return
+        }
+        const dx = first.clientX - second.clientX
+        const dy = first.clientY - second.clientY
+        pinchStartDistanceRef.current = Math.hypot(dx, dy)
+        pinchStartZoomRef.current = zoomTargetRef.current
+        isPinchingRef.current = true
+        dragStateRef.current.active = false
+        invalidateRef.current?.()
+      }
+    },
+    []
+  )
+
+  const handleTouchMove = React.useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      if (!isPinchingRef.current || event.touches.length !== 2) {
+        return
+      }
+
+      const first = event.touches.item(0)
+      const second = event.touches.item(1)
+      if (!first || !second) {
+        return
+      }
+      const dx = first.clientX - second.clientX
+      const dy = first.clientY - second.clientY
+      const distance = Math.hypot(dx, dy)
+      const scale = distance / Math.max(pinchStartDistanceRef.current, 1)
+      const nextZoom = pinchStartZoomRef.current / scale
+      zoomTargetRef.current = clamp(nextZoom, ZOOM_MIN, ZOOM_MAX)
+      invalidateRef.current?.()
+    },
+    []
+  )
+
+  const handleTouchEnd = React.useCallback((event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length < 2) {
+      isPinchingRef.current = false
+    }
+  }, [])
+
   return (
     <div
       ref={containerRef}
@@ -217,6 +268,10 @@ export function ArchiveCanvas({ images, onSelect }: ArchiveCanvasProps) {
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
       onWheel={handleWheel}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       style={{ touchAction: "none" }}
     >
       <Canvas
