@@ -1,10 +1,10 @@
-import { JetBrains_Mono } from "next/font/google"
+import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils";
 
-const jetbrainsSans = JetBrains_Mono({
+const jakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
 })
@@ -14,7 +14,7 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 })
 
-const jetbrainsHeading = JetBrains_Mono({
+const jakartaHeading = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-heading",
 })
@@ -31,9 +31,9 @@ export default function RootLayout({
       className={cn(
         "antialiased",
         "font-sans",
-        jetbrainsSans.variable,
+        jakartaSans.variable,
         jetbrainsMono.variable,
-        jetbrainsHeading.variable
+        jakartaHeading.variable
       )}
     >
       <body>

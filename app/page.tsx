@@ -58,7 +58,7 @@ export default function Page() {
           showIntroText ? "opacity-100" : "opacity-0"
         }`}
       >
-        <p className="text-center text-xs font-medium uppercase tracking-[0.28em] text-[#7a1f1f] md:text-sm">
+        <p className="text-center text-xs font-medium tracking-[0.28em] text-[#7a1f1f] md:text-sm">
           an archive of everything i&apos;ve seen
         </p>
       </div>
