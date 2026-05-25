@@ -21,7 +21,13 @@ export async function GET(request: Request, context: RouteContext) {
   const requestUrl = new URL(request.url)
   const assetUrl = new URL(`/assets/${id}`, directusUrl)
   assetUrl.search = requestUrl.search
-  const upstream = await fetch(assetUrl.toString(), { cache: "no-store" })
+
+  let upstream = await fetch(assetUrl.toString(), { cache: "no-store" })
+
+  if (!upstream.ok && assetUrl.search) {
+    const fallbackUrl = new URL(`/assets/${id}`, directusUrl)
+    upstream = await fetch(fallbackUrl.toString(), { cache: "no-store" })
+  }
 
   if (!upstream.ok) {
     return NextResponse.json(

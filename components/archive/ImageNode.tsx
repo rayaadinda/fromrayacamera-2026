@@ -29,7 +29,7 @@ export function ImageNode({
 }: ImageNodeProps) {
   const textureUrl = image.thumbUrl ?? image.url
   const texture = useTexture(textureUrl) as Texture
-  const { gl } = useThree()
+  const { gl, invalidate } = useThree()
 
   const configuredTexture = React.useMemo(() => {
     const cloned = texture.clone()
@@ -40,10 +40,12 @@ export function ImageNode({
   }, [gl, texture])
 
   React.useEffect(() => {
+    invalidate()
+
     return () => {
       configuredTexture.dispose()
     }
-  }, [configuredTexture])
+  }, [configuredTexture, invalidate])
 
   const scale = React.useMemo(() => {
     const aspect = image.width / image.height

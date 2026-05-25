@@ -121,6 +121,12 @@ export function ArchiveCanvas({ images, onSelect }: ArchiveCanvasProps) {
 
   const layout = React.useMemo(() => buildLayout(images), [images])
 
+  React.useEffect(() => {
+    if (images.length > 0) {
+      invalidateRef.current?.()
+    }
+  }, [images, layout])
+
   const stopDragging = React.useCallback(() => {
     dragStateRef.current.active = false
     setIsDragging(false)
@@ -222,6 +228,7 @@ export function ArchiveCanvas({ images, onSelect }: ArchiveCanvasProps) {
         frameloop="demand"
         onCreated={({ invalidate }) => {
           invalidateRef.current = invalidate
+          invalidate()
         }}
       >
         <ArchiveScene
