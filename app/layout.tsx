@@ -1,11 +1,11 @@
-import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google"
+import { Inter, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils";
 
-const jakartaSans = Plus_Jakarta_Sans({
+const interSans = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
 })
@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 })
 
-const jakartaHeading = Plus_Jakarta_Sans({
+const interHeading = Inter({
   subsets: ["latin"],
   variable: "--font-heading",
 })
@@ -32,9 +32,9 @@ export default function RootLayout({
       className={cn(
         "antialiased",
         "font-sans",
-        jakartaSans.variable,
+        interSans.variable,
         jetbrainsMono.variable,
-        jakartaHeading.variable
+        interHeading.variable
       )}
     >
       <body>

@@ -95,7 +95,7 @@ function ModalContent({ image, onClose }: ModalContentProps) {
             }}
           >
             {!isLoaded && (
-              <Skeleton className="absolute inset-0 bg-white/10" />
+              <Skeleton className="absolute inset-0 bg-white/40" />
             )}
             <Image
               src={image.url}

@@ -18,6 +18,7 @@ type ImageNodeProps = {
   rotationZ?: number
   onSelect: (image: ImageItem) => void
   dragState: React.MutableRefObject<DragState>
+  onLoaded?: () => void
 }
 
 export function ImageNode({
@@ -26,10 +27,12 @@ export function ImageNode({
   rotationZ = 0,
   onSelect,
   dragState,
+  onLoaded,
 }: ImageNodeProps) {
   const textureUrl = image.thumbUrl ?? image.url
   const texture = useTexture(textureUrl) as Texture
   const { gl, invalidate } = useThree()
+  const hasNotifiedRef = React.useRef(false)
 
   const configuredTexture = React.useMemo(() => {
     const cloned = texture.clone()
@@ -42,10 +45,15 @@ export function ImageNode({
   React.useEffect(() => {
     invalidate()
 
+    if (onLoaded && !hasNotifiedRef.current) {
+      hasNotifiedRef.current = true
+      onLoaded()
+    }
+
     return () => {
       configuredTexture.dispose()
     }
-  }, [configuredTexture, invalidate])
+  }, [configuredTexture, invalidate, onLoaded])
 
   const scale = React.useMemo(() => {
     const aspect = image.width / image.height
