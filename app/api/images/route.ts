@@ -60,8 +60,8 @@ async function fetchDirectusImages(baseUrl: string): Promise<ImageItem[]> {
         id: item.id,
         url: buildDirectusAssetUrl(file.id),
         previewUrl: buildDirectusAssetUrl(file.id, {
-          width: 420,
-          quality: 70,
+          width: 640,
+          quality: 80,
         }),
         thumbUrl: buildDirectusAssetUrl(file.id, { width: 900, quality: 85 }),
         modalUrl: buildDirectusAssetUrl(file.id, { width: 1600, quality: 85 }),

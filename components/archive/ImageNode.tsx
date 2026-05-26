@@ -1,9 +1,17 @@
 "use client"
 
+/* eslint-disable react-hooks/immutability */
+
 import * as React from "react"
-import { useThree } from "@react-three/fiber"
+import { useFrame, useThree } from "@react-three/fiber"
 import { useTexture } from "@react-three/drei"
-import { SRGBColorSpace, type Texture } from "three"
+import {
+  LinearFilter,
+  MathUtils,
+  SRGBColorSpace,
+  type MeshBasicMaterial,
+  type Texture,
+} from "three"
 
 import type { ImageItem } from "@/lib/image-data"
 
@@ -33,23 +41,37 @@ export function ImageNode({
     ? image.previewUrl ?? image.thumbUrl ?? image.url
     : image.thumbUrl ?? image.previewUrl ?? image.url
   const texture = useTexture(textureUrl) as Texture
-  const { gl, invalidate } = useThree()
-
-  const configuredTexture = React.useMemo(() => {
-    const cloned = texture.clone()
-    cloned.colorSpace = SRGBColorSpace
-    cloned.anisotropy = Math.min(gl.capabilities.getMaxAnisotropy(), 2)
-    cloned.needsUpdate = true
-    return cloned
-  }, [gl, texture])
+  const { invalidate } = useThree()
+  const materialRef = React.useRef<MeshBasicMaterial>(null)
+  const opacityRef = React.useRef(0)
 
   React.useEffect(() => {
-    invalidate()
+    // Three textures are mutable GPU resources; configure the cached texture in place.
+    texture.colorSpace = SRGBColorSpace
+    texture.anisotropy = 1
 
-    return () => {
-      configuredTexture.dispose()
+    if (preferPreview) {
+      texture.generateMipmaps = false
+      texture.minFilter = LinearFilter
     }
-  }, [configuredTexture, invalidate])
+
+    texture.needsUpdate = true
+    opacityRef.current = 0
+    if (materialRef.current) {
+      materialRef.current.opacity = 0
+    }
+    invalidate()
+  }, [invalidate, preferPreview, texture])
+
+  useFrame((state, delta) => {
+    if (!materialRef.current || opacityRef.current >= 0.995) {
+      return
+    }
+
+    opacityRef.current = MathUtils.damp(opacityRef.current, 1, 5, delta)
+    materialRef.current.opacity = opacityRef.current
+    state.invalidate()
+  })
 
   const scale = React.useMemo(() => {
     const aspect = image.width / image.height
@@ -86,7 +108,13 @@ export function ImageNode({
       onPointerOut={handlePointerOut}
     >
       <planeGeometry args={[1, 1]} />
-      <meshBasicMaterial map={configuredTexture} toneMapped={false} />
+      <meshBasicMaterial
+        ref={materialRef}
+        map={texture}
+        opacity={0}
+        toneMapped={false}
+        transparent
+      />
     </mesh>
   )
 }

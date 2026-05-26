@@ -26,9 +26,12 @@ const INERTIA_FRICTION = 0.86
 const ZOOM_MIN = 0
 const ZOOM_MAX = 10
 const ZOOM_SPEED = 0.008
+const MOBILE_INITIAL_BATCH = 16
+const MOBILE_BATCH_SIZE = 8
+const MOBILE_BATCH_INTERVAL = 220
 
 function usePrefersReducedCanvas() {
-  const [prefersReducedCanvas, setPrefersReducedCanvas] = React.useState(false)
+  const [prefersReducedCanvas, setPrefersReducedCanvas] = React.useState(true)
 
   React.useEffect(() => {
     const mediaQuery = window.matchMedia(
@@ -148,14 +151,37 @@ export function ArchiveCanvas({
   const pinchStartDistanceRef = React.useRef(0)
   const pinchStartZoomRef = React.useRef(12)
   const prefersReducedCanvas = usePrefersReducedCanvas()
+  const [mobileVisibleCount, setMobileVisibleCount] =
+    React.useState(MOBILE_INITIAL_BATCH)
+  const visibleCount = prefersReducedCanvas
+    ? Math.min(mobileVisibleCount, images.length)
+    : images.length
 
   const layout = React.useMemo(() => buildLayout(images), [images])
+  const visibleLayout = React.useMemo(
+    () => layout.slice(0, visibleCount),
+    [layout, visibleCount]
+  )
+
+  React.useEffect(() => {
+    if (!prefersReducedCanvas || visibleCount >= images.length) {
+      return
+    }
+
+    const timeout = window.setTimeout(() => {
+      setMobileVisibleCount((current) =>
+        Math.min(current + MOBILE_BATCH_SIZE, images.length)
+      )
+    }, MOBILE_BATCH_INTERVAL)
+
+    return () => window.clearTimeout(timeout)
+  }, [images.length, prefersReducedCanvas, visibleCount])
 
   React.useEffect(() => {
     if (images.length > 0) {
       invalidateRef.current?.()
     }
-  }, [images, layout])
+  }, [images.length, visibleLayout])
 
   const stopDragging = React.useCallback(() => {
     dragStateRef.current.active = false
@@ -320,7 +346,7 @@ export function ArchiveCanvas({
         }}
       >
         <ArchiveScene
-          layout={layout}
+          layout={visibleLayout}
           dragStateRef={dragStateRef}
           onSelect={onSelect}
           panCurrentRef={panCurrentRef}
@@ -456,15 +482,16 @@ function ArchiveScene({
   return (
     <group ref={groupRef}>
       {layout.map((item) => (
-        <ImageNode
-          key={item.image.id}
-          image={item.image}
-          position={item.position}
-          rotationZ={item.tilt}
-          onSelect={onSelect}
-          dragState={dragStateRef}
-          preferPreview={preferPreview}
-        />
+        <React.Suspense key={item.image.id} fallback={null}>
+          <ImageNode
+            image={item.image}
+            position={item.position}
+            rotationZ={item.tilt}
+            onSelect={onSelect}
+            dragState={dragStateRef}
+            preferPreview={preferPreview}
+          />
+        </React.Suspense>
       ))}
     </group>
   )

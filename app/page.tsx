@@ -4,33 +4,7 @@ import * as React from "react"
 
 import { ArchiveCanvas } from "@/components/archive/ArchiveCanvas"
 import { ImageModal } from "@/components/archive/ImageModal"
-import { MobileArchive } from "@/components/archive/MobileArchive"
 import type { ImageItem } from "@/lib/image-data"
-
-function useIsMobileDevice() {
-  const [isMobileDevice, setIsMobileDevice] = React.useState<boolean | null>(
-    null
-  )
-
-  React.useEffect(() => {
-    const mediaQuery = window.matchMedia(
-      "(max-width: 768px), (pointer: coarse)"
-    )
-
-    function updateDevice() {
-      setIsMobileDevice(mediaQuery.matches)
-    }
-
-    updateDevice()
-    mediaQuery.addEventListener("change", updateDevice)
-
-    return () => {
-      mediaQuery.removeEventListener("change", updateDevice)
-    }
-  }, [])
-
-  return isMobileDevice
-}
 
 export default function Page() {
   const [images, setImages] = React.useState<ImageItem[]>([])
@@ -39,8 +13,6 @@ export default function Page() {
   const [sceneReady, setSceneReady] = React.useState(false)
   const [loadProgress, setLoadProgress] = React.useState(0)
   const [showIntroText, setShowIntroText] = React.useState(true)
-  const isMobileDevice = useIsMobileDevice()
-  const hasDeviceProfile = isMobileDevice !== null
 
   React.useEffect(() => {
     let isActive = true
@@ -94,11 +66,12 @@ export default function Page() {
     return () => window.clearInterval(interval)
   }, [images.length, isLoading, sceneReady])
 
-  const isArchiveVisible =
-    hasDeviceProfile && !isLoading && (images.length === 0 || sceneReady)
+  const canMountArchive = !isLoading
+  const isArchiveVisible = canMountArchive
+  const canShowIntroText = !isLoading && (images.length === 0 || sceneReady)
 
   React.useEffect(() => {
-    if (!isArchiveVisible) {
+    if (!canShowIntroText) {
       return
     }
 
@@ -107,7 +80,7 @@ export default function Page() {
     }, 5200)
 
     return () => window.clearTimeout(timeout)
-  }, [isArchiveVisible])
+  }, [canShowIntroText])
 
   return (
     <main className="relative h-svh w-full overflow-hidden bg-white text-neutral-900">
@@ -116,17 +89,14 @@ export default function Page() {
           isArchiveVisible ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
-        {isArchiveVisible &&
-          (isMobileDevice ? (
-            <MobileArchive images={images} onSelect={setSelected} />
-          ) : (
-            <ArchiveCanvas images={images} onSelect={setSelected} />
-          ))}
+        {canMountArchive && (
+          <ArchiveCanvas images={images} onSelect={setSelected} />
+        )}
       </div>
 
       <div
         className={`pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-700 ${
-          showIntroText && isArchiveVisible ? "opacity-100" : "opacity-0"
+          showIntroText && canShowIntroText ? "opacity-100" : "opacity-0"
         }`}
       >
         <p className="text-center text-xs font-medium tracking-[0.28em] text-[#7a1f1f] md:text-sm">
@@ -134,8 +104,8 @@ export default function Page() {
         </p>
       </div>
 
-      {(!hasDeviceProfile || isLoading || (images.length > 0 && !sceneReady)) && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/75">
+      {(isLoading || (images.length > 0 && !sceneReady)) && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/45">
           <div className="flex items-center gap-3 text-xs text-neutral-500">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900" />
             Loading archive {loadProgress}%
