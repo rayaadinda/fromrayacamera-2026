@@ -98,7 +98,7 @@ function ModalContent({ image, onClose }: ModalContentProps) {
               <Skeleton className="absolute inset-0 bg-white/40" />
             )}
             <Image
-              src={image.url}
+              src={image.modalUrl ?? image.url}
               alt={image.title || ""}
               width={image.width}
               height={image.height}

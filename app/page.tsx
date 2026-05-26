@@ -4,7 +4,33 @@ import * as React from "react"
 
 import { ArchiveCanvas } from "@/components/archive/ArchiveCanvas"
 import { ImageModal } from "@/components/archive/ImageModal"
+import { MobileArchive } from "@/components/archive/MobileArchive"
 import type { ImageItem } from "@/lib/image-data"
+
+function useIsMobileDevice() {
+  const [isMobileDevice, setIsMobileDevice] = React.useState<boolean | null>(
+    null
+  )
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia(
+      "(max-width: 768px), (pointer: coarse)"
+    )
+
+    function updateDevice() {
+      setIsMobileDevice(mediaQuery.matches)
+    }
+
+    updateDevice()
+    mediaQuery.addEventListener("change", updateDevice)
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateDevice)
+    }
+  }, [])
+
+  return isMobileDevice
+}
 
 export default function Page() {
   const [images, setImages] = React.useState<ImageItem[]>([])
@@ -13,6 +39,8 @@ export default function Page() {
   const [sceneReady, setSceneReady] = React.useState(false)
   const [loadProgress, setLoadProgress] = React.useState(0)
   const [showIntroText, setShowIntroText] = React.useState(true)
+  const isMobileDevice = useIsMobileDevice()
+  const hasDeviceProfile = isMobileDevice !== null
 
   React.useEffect(() => {
     let isActive = true
@@ -66,7 +94,8 @@ export default function Page() {
     return () => window.clearInterval(interval)
   }, [images.length, isLoading, sceneReady])
 
-  const isArchiveVisible = !isLoading && (images.length === 0 || sceneReady)
+  const isArchiveVisible =
+    hasDeviceProfile && !isLoading && (images.length === 0 || sceneReady)
 
   React.useEffect(() => {
     if (!isArchiveVisible) {
@@ -87,10 +116,12 @@ export default function Page() {
           isArchiveVisible ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
-        <ArchiveCanvas
-          images={images}
-          onSelect={setSelected}
-        />
+        {isArchiveVisible &&
+          (isMobileDevice ? (
+            <MobileArchive images={images} onSelect={setSelected} />
+          ) : (
+            <ArchiveCanvas images={images} onSelect={setSelected} />
+          ))}
       </div>
 
       <div
@@ -103,7 +134,7 @@ export default function Page() {
         </p>
       </div>
 
-      {(isLoading || (images.length > 0 && !sceneReady)) && (
+      {(!hasDeviceProfile || isLoading || (images.length > 0 && !sceneReady)) && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/75">
           <div className="flex items-center gap-3 text-xs text-neutral-500">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900" />
