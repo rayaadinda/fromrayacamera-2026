@@ -59,6 +59,10 @@ async function fetchDirectusImages(baseUrl: string): Promise<ImageItem[]> {
       return {
         id: item.id,
         url: buildDirectusAssetUrl(file.id),
+        previewUrl: buildDirectusAssetUrl(file.id, {
+          width: 360,
+          quality: 60,
+        }),
         thumbUrl: buildDirectusAssetUrl(file.id, { width: 640, quality: 70 }),
         modalUrl: buildDirectusAssetUrl(file.id, { width: 1600, quality: 80 }),
         width: file.width ?? 1200,

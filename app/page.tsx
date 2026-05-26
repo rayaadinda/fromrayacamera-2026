@@ -11,12 +11,8 @@ export default function Page() {
   const [selected, setSelected] = React.useState<ImageItem | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
   const [sceneReady, setSceneReady] = React.useState(false)
-  const [loadProgress, setLoadProgress] = React.useState({ loaded: 0, total: 0 })
+  const [loadProgress, setLoadProgress] = React.useState(0)
   const [showIntroText, setShowIntroText] = React.useState(true)
-
-  const handleProgress = React.useCallback((loaded: number, total: number) => {
-    setLoadProgress({ loaded, total })
-  }, [])
 
   React.useEffect(() => {
     let isActive = true
@@ -30,7 +26,7 @@ export default function Page() {
           const items = data.items ?? []
           setImages(items)
           setSceneReady(false)
-          setLoadProgress({ loaded: 0, total: items.length })
+          setLoadProgress(0)
         }
       } catch (error) {
         console.error("Failed to load images", error)
@@ -49,35 +45,57 @@ export default function Page() {
   }, [])
 
   React.useEffect(() => {
+    if (isLoading || images.length === 0 || sceneReady) {
+      return
+    }
+
+    let progress = 0
+
+    const interval = window.setInterval(() => {
+      progress = Math.min(progress + Math.ceil(Math.random() * 7), 100)
+      setLoadProgress(progress)
+
+      if (progress >= 100) {
+        window.clearInterval(interval)
+        window.setTimeout(() => {
+          setSceneReady(true)
+        }, 250)
+      }
+    }, 120)
+
+    return () => window.clearInterval(interval)
+  }, [images.length, isLoading, sceneReady])
+
+  const isArchiveVisible = !isLoading && (images.length === 0 || sceneReady)
+
+  React.useEffect(() => {
+    if (!isArchiveVisible) {
+      return
+    }
+
     const timeout = window.setTimeout(() => {
       setShowIntroText(false)
-    }, 2200)
+    }, 5200)
 
     return () => window.clearTimeout(timeout)
-  }, [])
+  }, [isArchiveVisible])
 
   return (
     <main className="relative h-svh w-full overflow-hidden bg-white text-neutral-900">
       <div
         className={`absolute inset-0 transition-opacity duration-700 ${
-          !isLoading && (images.length === 0 || sceneReady)
-            ? "opacity-100"
-            : "opacity-0 pointer-events-none"
+          isArchiveVisible ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
         <ArchiveCanvas
           images={images}
           onSelect={setSelected}
-          onReady={() => setSceneReady(true)}
-          onProgress={handleProgress}
         />
       </div>
 
       <div
         className={`pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-700 ${
-          showIntroText && !isLoading && (images.length === 0 || sceneReady)
-            ? "opacity-100"
-            : "opacity-0"
+          showIntroText && isArchiveVisible ? "opacity-100" : "opacity-0"
         }`}
       >
         <p className="text-center text-xs font-medium tracking-[0.28em] text-[#7a1f1f] md:text-sm">
@@ -89,12 +107,7 @@ export default function Page() {
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/75">
           <div className="flex items-center gap-3 text-xs text-neutral-500">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900" />
-            Loading archive
-            {loadProgress.total > 0
-              ? ` ${Math.round(
-                  (loadProgress.loaded / loadProgress.total) * 100
-                )}%`
-              : ""}
+            Loading archive {loadProgress}%
           </div>
         </div>
       )}

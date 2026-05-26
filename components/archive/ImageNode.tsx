@@ -16,28 +16,29 @@ type ImageNodeProps = {
   image: ImageItem
   position: [number, number, number]
   rotationZ?: number
+  preferPreview?: boolean
   onSelect: (image: ImageItem) => void
   dragState: React.MutableRefObject<DragState>
-  onLoaded?: () => void
 }
 
 export function ImageNode({
   image,
   position,
   rotationZ = 0,
+  preferPreview = false,
   onSelect,
   dragState,
-  onLoaded,
 }: ImageNodeProps) {
-  const textureUrl = image.thumbUrl ?? image.url
+  const textureUrl = preferPreview
+    ? image.previewUrl ?? image.thumbUrl ?? image.url
+    : image.thumbUrl ?? image.previewUrl ?? image.url
   const texture = useTexture(textureUrl) as Texture
   const { gl, invalidate } = useThree()
-  const hasNotifiedRef = React.useRef(false)
 
   const configuredTexture = React.useMemo(() => {
     const cloned = texture.clone()
     cloned.colorSpace = SRGBColorSpace
-    cloned.anisotropy = gl.capabilities.getMaxAnisotropy()
+    cloned.anisotropy = Math.min(gl.capabilities.getMaxAnisotropy(), 2)
     cloned.needsUpdate = true
     return cloned
   }, [gl, texture])
@@ -45,15 +46,10 @@ export function ImageNode({
   React.useEffect(() => {
     invalidate()
 
-    if (onLoaded && !hasNotifiedRef.current) {
-      hasNotifiedRef.current = true
-      onLoaded()
-    }
-
     return () => {
       configuredTexture.dispose()
     }
-  }, [configuredTexture, invalidate, onLoaded])
+  }, [configuredTexture, invalidate])
 
   const scale = React.useMemo(() => {
     const aspect = image.width / image.height

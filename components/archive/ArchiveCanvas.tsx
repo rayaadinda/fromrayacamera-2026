@@ -10,8 +10,6 @@ import { ImageNode, type DragState } from "./ImageNode"
 type ArchiveCanvasProps = {
   images: ImageItem[]
   onSelect: (image: ImageItem) => void
-  onReady?: () => void
-  onProgress?: (loaded: number, total: number) => void
 }
 
 type LayoutItem = {
@@ -28,6 +26,29 @@ const INERTIA_FRICTION = 0.86
 const ZOOM_MIN = 0
 const ZOOM_MAX = 10
 const ZOOM_SPEED = 0.008
+
+function usePrefersReducedCanvas() {
+  const [prefersReducedCanvas, setPrefersReducedCanvas] = React.useState(false)
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia(
+      "(max-width: 768px), (pointer: coarse)"
+    )
+
+    function updatePreference() {
+      setPrefersReducedCanvas(mediaQuery.matches)
+    }
+
+    updatePreference()
+    mediaQuery.addEventListener("change", updatePreference)
+
+    return () => {
+      mediaQuery.removeEventListener("change", updatePreference)
+    }
+  }, [])
+
+  return prefersReducedCanvas
+}
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
@@ -111,14 +132,10 @@ function buildLayout(images: ImageItem[]): LayoutItem[] {
 export function ArchiveCanvas({
   images,
   onSelect,
-  onReady,
-  onProgress,
 }: ArchiveCanvasProps) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const invalidateRef = React.useRef<null | (() => void)>(null)
   const [isDragging, setIsDragging] = React.useState(false)
-  const hasSignaledReadyRef = React.useRef(false)
-  const loadedCountRef = React.useRef(0)
   const panTargetRef = React.useRef(new Vector2(0, 0))
   const panCurrentRef = React.useRef(new Vector2(0, 0))
   const panVelocityRef = React.useRef(new Vector2(0, 0))
@@ -130,33 +147,9 @@ export function ArchiveCanvas({
   const isPinchingRef = React.useRef(false)
   const pinchStartDistanceRef = React.useRef(0)
   const pinchStartZoomRef = React.useRef(12)
+  const prefersReducedCanvas = usePrefersReducedCanvas()
 
   const layout = React.useMemo(() => buildLayout(images), [images])
-  const batchKey = React.useMemo(
-    () => images.map((image) => image.id).join("|"),
-    [images]
-  )
-
-  React.useLayoutEffect(() => {
-    loadedCountRef.current = 0
-    hasSignaledReadyRef.current = false
-    onProgress?.(0, images.length)
-  }, [batchKey])
-
-  const handleImageLoaded = React.useCallback(() => {
-    loadedCountRef.current += 1
-    onProgress?.(loadedCountRef.current, images.length)
-
-    if (
-      onReady &&
-      images.length > 0 &&
-      loadedCountRef.current >= images.length &&
-      !hasSignaledReadyRef.current
-    ) {
-      hasSignaledReadyRef.current = true
-      onReady()
-    }
-  }, [images.length, onProgress, onReady])
 
   React.useEffect(() => {
     if (images.length > 0) {
@@ -309,9 +302,15 @@ export function ArchiveCanvas({
       style={{ touchAction: "none" }}
     >
       <Canvas
-        dpr={[1, 1.5]}
+        dpr={prefersReducedCanvas ? 1 : [1, 1.5]}
         camera={{ position: [0, 0, 12], fov: 45, near: 0.1, far: 100 }}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        gl={{
+          antialias: !prefersReducedCanvas,
+          alpha: true,
+          powerPreference: prefersReducedCanvas
+            ? "default"
+            : "high-performance",
+        }}
         eventSource={containerRef as React.RefObject<HTMLElement>}
         eventPrefix="client"
         frameloop="demand"
@@ -324,12 +323,12 @@ export function ArchiveCanvas({
           layout={layout}
           dragStateRef={dragStateRef}
           onSelect={onSelect}
-          onImageLoaded={handleImageLoaded}
           panCurrentRef={panCurrentRef}
           panTargetRef={panTargetRef}
           panVelocityRef={panVelocityRef}
           zoomCurrentRef={zoomCurrentRef}
           zoomTargetRef={zoomTargetRef}
+          preferPreview={prefersReducedCanvas}
         />
       </Canvas>
     </div>
@@ -339,25 +338,25 @@ export function ArchiveCanvas({
 type ArchiveSceneProps = {
   layout: LayoutItem[]
   onSelect: (image: ImageItem) => void
-  onImageLoaded: () => void
   dragStateRef: React.MutableRefObject<DragState>
   panCurrentRef: React.MutableRefObject<Vector2>
   panTargetRef: React.MutableRefObject<Vector2>
   panVelocityRef: React.MutableRefObject<Vector2>
   zoomCurrentRef: React.MutableRefObject<number>
   zoomTargetRef: React.MutableRefObject<number>
+  preferPreview: boolean
 }
 
 function ArchiveScene({
   layout,
   onSelect,
-  onImageLoaded,
   dragStateRef,
   panCurrentRef,
   panTargetRef,
   panVelocityRef,
   zoomCurrentRef,
   zoomTargetRef,
+  preferPreview,
 }: ArchiveSceneProps) {
   const groupRef = React.useRef<Group>(null)
 
@@ -464,7 +463,7 @@ function ArchiveScene({
           rotationZ={item.tilt}
           onSelect={onSelect}
           dragState={dragStateRef}
-          onLoaded={onImageLoaded}
+          preferPreview={preferPreview}
         />
       ))}
     </group>

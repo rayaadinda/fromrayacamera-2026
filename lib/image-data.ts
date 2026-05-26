@@ -1,6 +1,7 @@
 export type ImageItem = {
   id: string
   url: string
+  previewUrl?: string
   thumbUrl?: string
   modalUrl?: string
   width: number
@@ -223,12 +224,20 @@ export function getImageItems(): ImageItem[] {
   return rawItems.map((item) => {
     const thumbWidth = Math.min(640, item.width)
     const thumbHeight = Math.round((thumbWidth / item.width) * item.height)
+    const previewWidth = Math.min(360, item.width)
+    const previewHeight = Math.round((previewWidth / item.width) * item.height)
     const modalWidth = Math.min(1600, item.width)
     const modalHeight = Math.round((modalWidth / item.width) * item.height)
 
     return {
       id: item.id,
       url: buildUrl(item.path, item.id, item.width, item.height),
+      previewUrl: buildUrl(
+        item.path,
+        `${item.id}-preview`,
+        previewWidth,
+        previewHeight
+      ),
       thumbUrl: buildUrl(item.path, `${item.id}-thumb`, thumbWidth, thumbHeight),
       modalUrl: buildUrl(item.path, `${item.id}-modal`, modalWidth, modalHeight),
       width: item.width,
