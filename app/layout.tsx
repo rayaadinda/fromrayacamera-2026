@@ -1,13 +1,16 @@
-import { Inter, JetBrains_Mono } from "next/font/google"
+import localFont from "next/font/local"
+import { JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils";
 
-const interSans = Inter({
-  subsets: ["latin"],
+const arialGreekSans = localFont({
+  src: "../public/font/Arial Greek Regular.ttf",
   variable: "--font-sans",
+  display: "swap",
+  weight: "400",
 })
 
 const jetbrainsMono = JetBrains_Mono({
@@ -15,9 +18,11 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 })
 
-const interHeading = Inter({
-  subsets: ["latin"],
+const arialGreekHeading = localFont({
+  src: "../public/font/Arial Greek Regular.ttf",
   variable: "--font-heading",
+  display: "swap",
+  weight: "400",
 })
 
 export default function RootLayout({
@@ -32,9 +37,9 @@ export default function RootLayout({
       className={cn(
         "antialiased",
         "font-sans",
-        interSans.variable,
+        arialGreekSans.variable,
         jetbrainsMono.variable,
-        interHeading.variable
+        arialGreekHeading.variable
       )}
     >
       <body>

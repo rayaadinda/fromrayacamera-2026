@@ -19,12 +19,12 @@ type LayoutItem = {
 }
 
 const WORLD_EXTENT = { x: 12, y: 8 }
-const WORLD_DEPTH = 5
+const WORLD_DEPTH = 3
 const PAN_BOUNDS = { x: 10, y: 6 }
 const DRAG_SPEED = 0.02
 const INERTIA_FRICTION = 0.86
 const ZOOM_MIN = 0
-const ZOOM_MAX = 10
+const ZOOM_MAX = 15
 const ZOOM_SPEED = 0.008
 const MOBILE_INITIAL_BATCH = 16
 const MOBILE_BATCH_SIZE = 8

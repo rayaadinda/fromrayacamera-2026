@@ -4,8 +4,11 @@ import * as React from "react"
 
 import type { ImageItem } from "@/lib/image-data"
 import Image from "next/image"
+import { Inter } from "next/font/google"
 
 import { Skeleton } from "@/components/ui/skeleton"
+
+const inter = Inter({ subsets: ["latin"] })
 
 type ImageModalProps = {
   image: ImageItem | null
@@ -42,6 +45,26 @@ type ModalContentProps = {
 function ModalContent({ image, onClose }: ModalContentProps) {
   const [isLoaded, setIsLoaded] = React.useState(false)
   const [modalSize, setModalSize] = React.useState(() => getModalSize(image))
+
+  const formattedDate = React.useMemo(() => {
+    if (!image.date) {
+      return ""
+    }
+    const parsed = new Date(image.date)
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    }
+    return image.date
+  }, [image.date])
+
+  const metaText = React.useMemo(() => {
+    const location = image.location?.trim()
+    return [location, formattedDate].filter(Boolean).join(" ")
+  }, [formattedDate, image.location])
 
   React.useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -106,19 +129,28 @@ function ModalContent({ image, onClose }: ModalContentProps) {
               className={`h-full w-full rounded-md object-contain shadow-2xl transition-opacity duration-300 ${
                 isLoaded ? "opacity-100" : "opacity-0"
               }`}
-              onLoadingComplete={() => setIsLoaded(true)}
+              onLoad={() => setIsLoaded(true)}
               onError={() => setIsLoaded(true)}
               priority
             />
           </div>
         </div>
-        <div className="w-full max-w-sm text-sm leading-relaxed text-white/80">
-          <p className="text-base font-medium text-white">
+        <div
+          className={`flex w-full max-w-sm flex-col text-sm leading-relaxed text-white/80 ${
+            inter.className
+          }`}
+        >
+          <p className="text-xl font-medium tracking-wide antialiased text-white">
             {image.title || "Untitled"}
           </p>
-          <p className="mt-3">
+          <p className="text-sm antialiased mt-3 tracking-normal text-white/70">
             {image.description || "A short note lives next to this frame."}
           </p>
+          {metaText ? (
+            <p className="mt-auto pt-4 text-xs tracking-wide text-white/50">
+              {metaText}
+            </p>
+          ) : null}
         </div>
       </div>
     </div>

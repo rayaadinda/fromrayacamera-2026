@@ -77,7 +77,7 @@ export default function Page() {
 
     const timeout = window.setTimeout(() => {
       setShowIntroText(false)
-    }, 5200)
+    }, 8200)
 
     return () => window.clearTimeout(timeout)
   }, [canShowIntroText])
@@ -99,7 +99,7 @@ export default function Page() {
           showIntroText && canShowIntroText ? "opacity-100" : "opacity-0"
         }`}
       >
-        <p className="text-center text-xs font-medium tracking-[0.28em] text-[#7a1f1f] md:text-sm">
+        <p className="text-center text-sm font-medium tracking-wide text-black md:text-xl">
           an archive of everything i&apos;ve seen
         </p>
       </div>

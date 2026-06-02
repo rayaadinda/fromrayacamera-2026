@@ -8,6 +8,8 @@ export type ImageItem = {
   height: number
   title?: string
   description?: string
+  location?: string
+  date?: string
 }
 
 type RawImageItem = Omit<ImageItem, "url" | "thumbUrl" | "modalUrl"> & {

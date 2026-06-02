@@ -7,12 +7,15 @@ type DirectusFile = {
   width?: number
   height?: number
   title?: string
+  location?: string
+  metadata?: unknown
 }
 
 type DirectusImage = {
   id: string
   title?: string
   description?: string
+  date_created?: string
   image?: DirectusFile | null
 }
 
@@ -36,7 +39,7 @@ async function fetchDirectusImages(baseUrl: string): Promise<ImageItem[]> {
   const url = new URL("/items/images", baseUrl)
   url.searchParams.set(
     "fields",
-    "id,title,description,image.id,image.width,image.height,image.title"
+    "id,title,description,image.id,image.width,image.height,image.title,image.location,image.metadata"
   )
   url.searchParams.set("limit", "200")
   url.searchParams.set("filter[status][_eq]", "published")
@@ -49,12 +52,73 @@ async function fetchDirectusImages(baseUrl: string): Promise<ImageItem[]> {
   const payload = (await response.json()) as { data?: DirectusImage[] }
   const items = payload.data ?? []
 
+  function parseExifDate(value: string) {
+    const trimmed = value.trim()
+    const normalized = trimmed.replace(
+      /^(\d{4}):(\d{2}):(\d{2})\s/,
+      "$1-$2-$3T"
+    )
+    const parsed = new Date(normalized)
+    if (Number.isNaN(parsed.getTime())) {
+      return undefined
+    }
+    return parsed.toISOString()
+  }
+
+  function getMetadata(file: DirectusFile | null | undefined) {
+    if (!file?.metadata) {
+      return null
+    }
+
+    if (typeof file.metadata === "string") {
+      try {
+        return JSON.parse(file.metadata) as Record<string, unknown>
+      } catch {
+        return null
+      }
+    }
+
+    if (typeof file.metadata === "object") {
+      return file.metadata as Record<string, unknown>
+    }
+
+    return null
+  }
+
+  function getStringValue(value: unknown) {
+    return typeof value === "string" && value.trim() ? value : undefined
+  }
+
+  function getCapturedDate(file: DirectusFile | null | undefined) {
+    const metadata = getMetadata(file)
+    const exif = metadata && typeof metadata.exif === "object" ? metadata.exif : null
+    const ifd0 = metadata && typeof metadata.ifd0 === "object" ? metadata.ifd0 : null
+
+    const raw =
+      getStringValue(exif && (exif as Record<string, unknown>).DateTimeOriginal) ||
+      getStringValue(exif && (exif as Record<string, unknown>).DateTimeDigitized) ||
+      getStringValue(exif && (exif as Record<string, unknown>).CreateDate) ||
+      getStringValue(exif && (exif as Record<string, unknown>).DateTime) ||
+      getStringValue(ifd0 && (ifd0 as Record<string, unknown>).DateTime) ||
+      getStringValue(metadata?.DateTimeOriginal) ||
+      getStringValue(metadata?.CreateDate) ||
+      getStringValue(metadata?.DateTime)
+
+    if (!raw) {
+      return undefined
+    }
+
+    return parseExifDate(raw) || raw
+  }
+
   return items
     .map((item) => {
       const file = item.image
       if (!file?.id) {
         return null
       }
+
+      const capturedDate = getCapturedDate(file)
 
       return {
         id: item.id,
@@ -69,6 +133,8 @@ async function fetchDirectusImages(baseUrl: string): Promise<ImageItem[]> {
         height: file.height ?? 800,
         title: item.title ?? file.title,
         description: item.description,
+        location: file.location,
+        date: capturedDate,
       }
     })
     .filter(Boolean) as ImageItem[]
