@@ -18,13 +18,13 @@ type LayoutItem = {
   tilt: number
 }
 
-const WORLD_EXTENT = { x: 12, y: 8 }
-const WORLD_DEPTH = 3
-const PAN_BOUNDS = { x: 10, y: 6 }
+const WORLD_EXTENT = { x: 14, y: 14 }
+const WORLD_DEPTH = 4
+const PAN_BOUNDS = { x: 12, y: 12 }
 const DRAG_SPEED = 0.02
 const INERTIA_FRICTION = 0.86
 const ZOOM_MIN = 0
-const ZOOM_MAX = 15
+const ZOOM_MAX = 12
 const ZOOM_SPEED = 0.008
 const MOBILE_INITIAL_BATCH = 16
 const MOBILE_BATCH_SIZE = 8
@@ -86,7 +86,7 @@ function getImageRadius(image: ImageItem) {
 function buildLayout(images: ImageItem[]): LayoutItem[] {
   const placed: Array<{ x: number; y: number; r: number }> = []
   const minCenter = 2.5
-  const overlapFactor = 0.72
+  const overlapFactor = 0.80
   const maxAttempts = 60
 
   return images.map((image, index) => {
@@ -357,6 +357,7 @@ export function ArchiveCanvas({
           preferPreview={prefersReducedCanvas}
         />
       </Canvas>
+      <p className="text-black text-2xl">TESTTT</p>
     </div>
   )
 }

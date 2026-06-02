@@ -1,10 +1,14 @@
 "use client"
 
 import * as React from "react"
+import { Inter } from "next/font/google"
 
 import { ArchiveCanvas } from "@/components/archive/ArchiveCanvas"
 import { ImageModal } from "@/components/archive/ImageModal"
 import type { ImageItem } from "@/lib/image-data"
+
+const instagramHref = "https://instagram.com/fromrayacamera"
+const inter = Inter({ subsets: ["latin"] })
 
 export default function Page() {
   const [images, setImages] = React.useState<ImageItem[]>([])
@@ -84,6 +88,16 @@ export default function Page() {
 
   return (
     <main className="relative h-svh w-full overflow-hidden bg-white text-neutral-900">
+      <a
+        href={instagramHref}
+        target="_blank"
+        rel="noreferrer"
+        className={`absolute bottom-4 right-4 z-30 pointer-events-auto text-[10px] font-medium tracking-wider antialiased text-black transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30 sm:bottom-6 sm:right-6 sm:text-[11px] ${inter.className}`}
+        aria-label="Visit @fromrayacamera on Instagram"
+      >
+        @fromrayacamera
+      </a>
+
       <div
         className={`absolute inset-0 transition-opacity duration-700 ${
           isArchiveVisible ? "opacity-100" : "opacity-0 pointer-events-none"
