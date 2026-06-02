@@ -18,7 +18,7 @@ type LayoutItem = {
   tilt: number
 }
 
-const WORLD_EXTENT = { x: 14, y: 14 }
+const WORLD_EXTENT = { x: 12, y: 10 }
 const WORLD_DEPTH = 4
 const PAN_BOUNDS = { x: 12, y: 12 }
 const DRAG_SPEED = 0.02
@@ -26,8 +26,8 @@ const INERTIA_FRICTION = 0.86
 const ZOOM_MIN = 0
 const ZOOM_MAX = 12
 const ZOOM_SPEED = 0.008
-const MOBILE_INITIAL_BATCH = 16
-const MOBILE_BATCH_SIZE = 8
+const MOBILE_INITIAL_BATCH = 32
+const MOBILE_BATCH_SIZE = 10
 const MOBILE_BATCH_INTERVAL = 220
 
 function usePrefersReducedCanvas() {
