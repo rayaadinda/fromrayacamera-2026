@@ -40,6 +40,7 @@ export function ImageNode({
   const textureUrl = preferPreview
     ? image.previewUrl ?? image.thumbUrl ?? image.url
     : image.thumbUrl ?? image.previewUrl ?? image.url
+  const useLowResTexture = textureUrl !== image.url
   const texture = useTexture(textureUrl) as Texture
   const { invalidate } = useThree()
   const materialRef = React.useRef<MeshBasicMaterial>(null)
@@ -50,7 +51,7 @@ export function ImageNode({
     texture.colorSpace = SRGBColorSpace
     texture.anisotropy = 1
 
-    if (preferPreview) {
+    if (useLowResTexture) {
       texture.generateMipmaps = false
       texture.minFilter = LinearFilter
     }
@@ -61,7 +62,7 @@ export function ImageNode({
       materialRef.current.opacity = 0
     }
     invalidate()
-  }, [invalidate, preferPreview, texture])
+  }, [invalidate, texture, useLowResTexture])
 
   useFrame((state, delta) => {
     if (!materialRef.current || opacityRef.current >= 0.995) {

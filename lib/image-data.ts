@@ -226,7 +226,7 @@ export function getImageItems(): ImageItem[] {
   return rawItems.map((item) => {
     const thumbWidth = Math.min(900, item.width)
     const thumbHeight = Math.round((thumbWidth / item.width) * item.height)
-    const previewWidth = Math.min(640, item.width)
+    const previewWidth = Math.min(1200, item.width)
     const previewHeight = Math.round((previewWidth / item.width) * item.height)
     const modalWidth = Math.min(1600, item.width)
     const modalHeight = Math.round((modalWidth / item.width) * item.height)

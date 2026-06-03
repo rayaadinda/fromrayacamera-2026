@@ -26,8 +26,8 @@ const INERTIA_FRICTION = 0.86
 const ZOOM_MIN = 0
 const ZOOM_MAX = 12
 const ZOOM_SPEED = 0.008
-const MOBILE_INITIAL_BATCH = 32
-const MOBILE_BATCH_SIZE = 10
+const MOBILE_INITIAL_BATCH = 20
+const MOBILE_BATCH_SIZE = 8
 const MOBILE_BATCH_INTERVAL = 220
 
 function usePrefersReducedCanvas() {
